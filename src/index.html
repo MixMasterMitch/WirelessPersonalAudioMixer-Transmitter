@@ -1,0 +1,130 @@
+<html>
+    <head>
+        <script>
+            if (process.env.NODE_ENV === 'development') {
+
+                // Load livereload
+//                var script = document.createElement('script');
+//                script.type = 'text/javascript';
+//                script.src = 'http://localhost:35730/livereload.js';
+//                document.head.appendChild(script);
+
+                // Clear node module cache
+                /*
+                    // This causes problems in iojs
+                    for(var module in global.require.cache){
+                        if(global.require.cache.hasOwnProperty(module)){
+                            delete global.require.cache[module];
+                        }
+                    }
+                */
+
+                // Show dev tools
+                require('nw.gui').Window.get().showDevTools()
+
+            }
+        </script>
+        <link rel="stylesheet" href="components/bootstrap/dist/css/bootstrap.css">
+        <link rel="stylesheet" href="components/seiyria-bootstrap-slider/dist/css/bootstrap-slider.css">
+        <link rel="stylesheet" href="css/main.css">
+    </head>
+    <body ng-app="WirelessPersonalAudioMixerTransmitter">
+        <div id="header">
+            <div class="container">
+                <h1>Wireless Audio Mixer Server</h1>
+                <div class="transmitterName" ng-controller="TransmitterNameController">
+                    <div ng-hide="editingName" class="name" ng-click="editingName = true">{{name}}</div>
+                    <div ng-show="editingName" class="editingName">
+                        <input ng-model="name">
+                        <span class="saveButton glyphicon glyphicon-ok" ng-click="editingName = false"></span>
+                    </div>
+                </div>
+                <span class="spacer">-</span>
+                <div class="inputDeviceDropdown dropdown" ng-controller="InputDeviceController">
+                    <div class="dropdown-toggle" id="inputDeviceDropdown" data-toggle="dropdown" aria-expanded="true">
+                        {{inputDevice.name}}
+                        <span class="caret"></span>
+                    </div>
+                    <ul class="dropdown-menu" role="menu" aria-labelledby="inputDeviceDropdown">
+                        <li ng-repeat="inputDevice in inputDevices" role="presentation" ng-click="selectInputDevice(inputDevice)"><a role="menuitem" tabindex="-1" href="#">{{inputDevice.name}}</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div ng-cloak ng-controller="MixController">
+            <div class="container">
+                <div class="audioChannelHeader">
+                    <div class="title">Audio Channels</div>
+                    <div class="receiverHeader" ng-repeat="receiver in receivers">{{receiver.name}}</div>
+                </div>
+            </div>
+            <div class="container">
+                <div class="audioChannel" ng-repeat="audioChannel in audioChannels">
+                    <div class="audioChannelDetails">
+                        <span ng-hide="editingName" class="removeButton glyphicon glyphicon-remove" ng-click="removeAudioChannel($index)"></span>
+                        <div class="audioChannelName">
+                            <div ng-hide="editingName" class="name" ng-click="editingName = true">{{audioChannel.name}}</div>
+                            <div ng-show="editingName">
+                                <input ng-model="audioChannel.name">
+                                <span class="saveButton glyphicon glyphicon-ok" ng-click="editingName = false" ng-class="{active : audioChannel.solo}" ng-click="soloAudioChannel($index)"></span>
+                            </div>
+                        </div>
+                        <div>
+                            <select ng-options="('Channel ' + (channelNumber + 1)) for channelNumber in inputDevice.channelNumbers" ng-model="audioChannel.deviceChannelNum"></select>
+                            <span class="soloButton glyphicon glyphicon-headphones" ng-class="{active : audioChannel.solo}" ng-click="soloAudioChannel($index)"></span>
+                            <span class="muteButton glyphicon glyphicon-volume-off" ng-class="{active : audioChannel.muted}" ng-click="muteAudioChannel($index)"></span>
+                            <div volume-level-bar volume="audioChannel.level"></div>
+                        </div>
+                        <div class="latency">Latency: {{inputDevice.latency}}ms</div>
+                    </div>
+                    <div class="gain" ng-repeat="receiver in receivers">
+                        <slider
+                                class="sliderWrapper"
+                                ng-model="receiver.gains[audioChannel.id]"
+                                min="-100"
+                                step="1"
+                                max="100"
+                                value="50"
+                                orientation="vertical"
+                                reversed="true"
+                                formater="formatSliderTooltip"
+                                enabled="{{!audioChannel.muted && (audioChannel.solo || !soloMode)}}">
+                            Test2
+                        </slider>
+                    </div>
+                </div>
+                <div class="addChannelButton" ng-click="addAudioChannel()">
+                    <span class="glyphicon glyphicon-plus"></span>
+                    Add Channel
+                </div>
+            </div>
+        </div>
+
+        <script src="components/jquery/dist/jquery.js"></script>
+        <script src="components/bootstrap/dist/js/bootstrap.js"></script>
+        <script src="components/angular/angular.js"></script>
+        <script src="components/seiyria-bootstrap-slider/dist/bootstrap-slider.min.js"></script>
+        <script src="components/angular-bootstrap-slider/slider.js"></script>
+
+        <script src="js/app.js"></script>
+        <script src="js/directives/volumeLevelBar.js"></script>
+        <script src="js/factories/backendFactory.js"></script>
+        <script src="js/factories/audioChannelsFactory.js"></script>
+        <script src="js/factories/controlApiServerFactory.js"></script>
+        <script src="js/factories/shortid.js"></script>
+        <script src="js/factories/receiverDiscovery.js"></script>
+        <script src="js/factories/registeredReceiverFactory.js"></script>
+        <script src="js/factories/transmitterName.js"></script>
+        <script src="js/controllers/InputDeviceController.js"></script>
+        <script src="js/controllers/MixController.js"></script>
+        <script src="js/controllers/TransmitterNameController.js"></script>
+        <script>
+            var gui = require('nw.gui');
+            var win = gui.Window.get();
+            var nativeMenuBar = new gui.Menu({ type: "menubar" });
+            nativeMenuBar.createMacBuiltin("My App");
+            win.menu = nativeMenuBar;
+        </script>
+    </body>
+</html>
